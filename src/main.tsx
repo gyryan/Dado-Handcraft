@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { HomePage } from './components/HomePage';
-import { ShopPage } from './components/ShopPage';
-import { ProductDetailPage } from './components/ProductDetailPage';
-import { CartPage } from './components/CartPage';
-import { CheckoutPage } from './components/CheckoutPage';
-import { LoginPage } from './components/LoginPage';
-import { AccountPage } from './components/AccountPage';
-import { AdminDashboard } from './components/AdminDashboard';
-import { AdminProducts } from './components/AdminProducts';
-import { AdminOrders } from './components/AdminOrders';
-import { AdminSettings } from './components/AdminSettings';
+import { HomePage } from './components/USER/HomePage';
+import { ShopPage } from './components/PRODUCT/ShopPage';
+import { ProductDetailPage } from './components/PRODUCT/ProductDetailPage';
+import { CartPage } from './components/USER/CartPage';
+import { CheckoutPage } from './components/PRODUCT/CheckoutPage';
+import { LoginPage } from './components/USER/LoginPage';
+import { AccountPage } from './components/ADMIN/AccountPage';
+import { AdminDashboard } from './components/ADMIN/AdminDashboard';
+import { AdminProducts } from './components/ADMIN/AdminProducts';
+import { AdminOrders } from './components/ADMIN/AdminOrders';
+import { AdminSettings } from './components/ADMIN/AdminSettings';
 
 export type Product = {
   id: string;

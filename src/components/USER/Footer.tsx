@@ -1,4 +1,4 @@
-import { Instagram, Facebook, Mail } from 'lucide-react';
+import { Globe, Mail, MessageCircle } from 'lucide-react';
 import { Page } from '../../main';
 
 type FooterProps = {
@@ -89,10 +89,10 @@ export function Footer({ onNavigate }: FooterProps) {
             <h3 className="text-lg mb-4">Connect With Us</h3>
             <div className="flex space-x-4 mb-4">
               <button className="text-gray-400 hover:text-white transition-colors">
-                <Instagram className="w-5 h-5" />
+                <Globe className="w-5 h-5" />
               </button>
               <button className="text-gray-400 hover:text-white transition-colors">
-                <Facebook className="w-5 h-5" />
+                <MessageCircle className="w-5 h-5" />
               </button>
               <button className="text-gray-400 hover:text-white transition-colors">
                 <Mail className="w-5 h-5" />
