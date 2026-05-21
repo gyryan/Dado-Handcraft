@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from './lib/supabase';
 import { HomePage } from './components/USER/HomePage';
 import { ShopPage } from './components/PRODUCT/ShopPage';
 import { ProductDetailPage } from './components/PRODUCT/ProductDetailPage';
@@ -10,6 +11,7 @@ import { AdminDashboard } from './components/ADMIN/AdminDashboard';
 import { AdminProducts } from './components/ADMIN/AdminProducts';
 import { AdminOrders } from './components/ADMIN/AdminOrders';
 import { AdminSettings } from './components/ADMIN/AdminSettings';
+
 
 export type Product = {
   id: string;
@@ -66,7 +68,77 @@ export default function Component() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch products from Supabase on component mount
+  useEffect(() => {
+    fetchProducts();
+    checkUser();
+  }, []);
+
+  // Fetch products from Supabase
+  async function fetchProducts() {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching products:', error);
+        // Fallback to mock data if Supabase fails
+        setProducts(mockProducts);
+      } else if (data && data.length > 0) {
+        // Transform Supabase data to match your Product type
+        const transformedProducts: Product[] = data.map((item: any) => ({
+          id: item.product_id.toString(),
+          name: item.name,
+          price: item.price,
+          description: item.description || '',
+          category: item.category,
+          image: item.image_url || '',
+          stock: item.stock,
+          rating: item.rating,
+          images: item.image_url ? [item.image_url] : []
+        }));
+        setProducts(transformedProducts);
+      } else {
+        // Use mock data if no products in database
+        setProducts(mockProducts);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setProducts(mockProducts);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Check if user is logged in and get their role
+  async function checkUser() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setIsLoggedIn(true);
+        
+        // Get user role from your users table
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        if (!error && userData) {
+          setIsAdmin(userData.role === 'admin');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    }
+  }
+
+  // Mock products as fallback
   const mockProducts: Product[] = [
     {
       id: '1',
@@ -134,8 +206,6 @@ export default function Component() {
     }
   ];
 
-  const [products] = useState<Product[]>(mockProducts);
-
   const addToCart = (product: Product, quantity: number = 1) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.product.id === product.id);
@@ -175,25 +245,67 @@ export default function Component() {
     setCurrentPage(page);
   };
 
-  const handleLogin = (email: string, password: string) => {
-    // Mock login - in real app, this would validate credentials
-    if (email.includes('admin')) {
-      setIsAdmin(true);
-      setIsLoggedIn(true);
-      setCurrentPage('admin-dashboard');
-    } else {
-      setIsLoggedIn(true);
-      setCurrentPage('account');
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        alert(error.message);
+        return;
+      }
+      
+      if (data.user) {
+        // Get user role from your users table
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .single();
+        
+        const isUserAdmin = userData?.role === 'admin';
+        setIsAdmin(isUserAdmin);
+        setIsLoggedIn(true);
+        
+        // Navigate to appropriate page
+        if (isUserAdmin) {
+          setCurrentPage('admin-dashboard');
+        } else {
+          setCurrentPage('account');
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Login failed. Please try again.');
     }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setIsAdmin(false);
-    setCurrentPage('home');
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setIsLoggedIn(false);
+      setIsAdmin(false);
+      setCurrentPage('home');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const renderPage = () => {
+    // Show loading spinner while fetching products
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#A8B8A8] mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading products...</p>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentPage) {
       case 'home':
         return (
